@@ -9,14 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-  public function up(): void
-{
-    Schema::table('users', function (Blueprint $table) {
-        $table->string('tempat_dudi')->nullable();
-        $table->string('dudi_lat')->nullable();
-        $table->string('dudi_lng')->nullable();
-    });
-}
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('tempat_dudi')->nullable();
+            $table->string('dudi_lat')->nullable();
+            $table->string('dudi_lng')->nullable();
+        });
+    }
 
     /**
      * Reverse the migrations.

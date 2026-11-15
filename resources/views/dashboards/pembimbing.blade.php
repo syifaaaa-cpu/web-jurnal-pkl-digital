@@ -29,23 +29,34 @@
     </script>
 </head>
 
-<body class="bg-slate-100 font-sans text-slate-800 antialiased">
+<body class="bg-slate-100 font-sans text-slate-800 antialiased overflow-x-hidden">
+
+    <!-- MOBILE DRAWER OVERLAY -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()"
+        class="fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 opacity-0 pointer-events-none md:hidden">
+    </div>
 
     <div class="flex h-screen overflow-hidden">
 
         <!-- SIDEBAR -->
         <aside id="sidebar"
-            class="hidden md:flex flex-col w-64 bg-schoolnavy text-white transition-all duration-300 z-30">
+            class="w-64 bg-schoolnavy text-white flex flex-col border-r border-blue-900/40 fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out shadow-2xl">
             <!-- Brand / Logo Header -->
-            <div class="h-20 flex items-center px-6 gap-3 border-b border-blue-900/50 bg-schoolnavy/50 backdrop-blur">
-                <div
-                    class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-schoolblue to-blue-400 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-600/40">
-                    <i class="fa-solid fa-chalkboard-user text-lg"></i>
+            <div class="h-20 flex items-center justify-between px-6 border-b border-blue-900/50 bg-schoolnavy/50 backdrop-blur">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-schoolblue to-blue-400 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-600/40">
+                        <i class="fa-solid fa-chalkboard-user text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-black tracking-wider text-white block uppercase">Guru PKL</span>
+                        <span class="text-[10px] text-blue-300 font-medium">Monitoring Sekolah</span>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-xs font-black tracking-wider text-white block uppercase">Guru PKL</span>
-                    <span class="text-[10px] text-blue-300 font-medium">Monitoring Sekolah</span>
-                </div>
+                <!-- Tombol Close Sidebar Khusus Mobile -->
+                <button type="button" onclick="toggleSidebar()" class="md:hidden text-blue-200 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
 
             <!-- Navigation Links -->
@@ -80,11 +91,14 @@
 
             <!-- Sidebar Footer / Logout -->
             <div class="p-4 border-t border-blue-950">
-                <a href="/"
-                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/15 transition text-xs font-semibold">
-                    <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>
-                    <span>Keluar</span>
-                </a>
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/15 transition text-xs font-semibold">
+                        <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>
+                        <span>Keluar</span>
+                    </button>
+                </form>
             </div>
         </aside>
 
@@ -737,6 +751,14 @@
                     link.classList.add('bg-schoolblue', 'text-white', 'shadow-md', 'shadow-blue-600/20');
                 }
             });
+
+            // Tutup sidebar otomatis di mobile setelah memilih tab
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+                    toggleSidebar();
+                }
+            }
         }
 
         // Fungsi Switch Sub-Tab Pengaturan (Profil, Keamanan)
@@ -765,10 +787,15 @@
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('hidden');
-            sidebar.classList.toggle('absolute');
-            sidebar.classList.toggle('inset-y-0');
-            sidebar.classList.toggle('left-0');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar || !overlay) return;
+
+            sidebar.classList.toggle('-translate-x-full');
+            if (overlay.classList.contains('opacity-0')) {
+                overlay.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+            }
         }
     </script>
 </body>

@@ -103,10 +103,13 @@
 
             <!-- Tombol Logout -->
             <div class="p-4 border-t border-blue-900/50">
-                <a href="/"
-                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-red-300 hover:bg-red-500/15 transition text-xs font-semibold">
-                    <i data-lucide="log-out" class="w-4 h-4"></i> Keluar Aplikasi
-                </a>
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-300 hover:bg-red-500/15 transition text-xs font-semibold">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Keluar Aplikasi
+                    </button>
+                </form>
             </div>
         </aside>
 
@@ -975,20 +978,26 @@
                             @csrf
                             @method('PUT')
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div class="space-y-1">
                                     <label class="font-bold text-slate-500">Departemen / Kompetensi Keahlian</label>
-                                    <input type="text" value="Pengembangan Perangkat Lunak dan Gim (PPLG)"
+                                    <input type="text" value="{{ Auth::user()->departemen ?? 'PPLG' }}"
                                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-gray-800 font-medium"
                                         disabled>
                                 </div>
                                 <div class="space-y-1">
                                     <label class="font-bold text-slate-500">Nomor Induk Siswa (NIS)</label>
-                                    <input type="text" value="{{ Auth::user()->nis ?? '102938' }}"
+                                    <input type="text" value="{{ Auth::user()->nis ?? '-' }}"
                                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-gray-800 font-medium"
                                         disabled>
                                 </div>
-                                <div class="space-y-1 sm:col-span-2">
+                                <div class="space-y-1">
+                                    <label class="font-bold text-slate-500">NISN (Nasional)</label>
+                                    <input type="text" value="{{ Auth::user()->nisn ?? '-' }}"
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-gray-800 font-medium"
+                                        disabled>
+                                </div>
+                                <div class="space-y-1 sm:col-span-3">
                                     <label class="font-bold text-slate-500">Tempat DUDI (Dunia Usaha / Dunia
                                         Industri)</label>
                                     <input type="text" name="tempat_dudi" value="{{ Auth::user()->tempat_dudi }}"
@@ -1396,6 +1405,12 @@
 
         document.addEventListener("DOMContentLoaded", function() {
             setTimeout(initDudiMap, 500);
+
+            // Buka tab sesuai hash URL jika ada (misal: #attendance atau #reports)
+            const hash = window.location.hash.replace('#', '');
+            if (hash && document.getElementById('tab-' + hash)) {
+                switchTab(hash);
+            }
         });
 
         const originalSwitchTab = window.switchTab;

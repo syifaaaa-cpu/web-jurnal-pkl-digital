@@ -30,23 +30,34 @@
     </script>
 </head>
 
-<body class="bg-slate-100 font-sans text-slate-800 antialiased">
+<body class="bg-slate-100 font-sans text-slate-800 antialiased overflow-x-hidden">
+
+    <!-- MOBILE DRAWER OVERLAY -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()"
+        class="fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 opacity-0 pointer-events-none md:hidden">
+    </div>
 
     <div class="flex h-screen overflow-hidden">
 
         <!-- SIDEBAR ADMIN -->
         <aside id="sidebar"
-            class="hidden md:flex flex-col w-64 bg-schoolnavy text-white transition-all duration-300 z-30">
+            class="w-64 bg-schoolnavy text-white flex flex-col border-r border-blue-900/40 fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out shadow-2xl">
             <!-- Brand / Logo Header -->
-            <div class="h-20 flex items-center px-6 gap-3 border-b border-blue-900/50 bg-schoolnavy/50 backdrop-blur">
-                <div
-                    class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-schoolblue to-blue-400 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-600/40">
-                    <i class="fa-solid fa-user-shield text-lg"></i>
+            <div class="h-20 flex items-center justify-between px-6 border-b border-blue-900/50 bg-schoolnavy/50 backdrop-blur">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-schoolblue to-blue-400 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-600/40">
+                        <i class="fa-solid fa-user-shield text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-black tracking-wider text-white block uppercase">Admin Pusat</span>
+                        <span class="text-[10px] text-blue-300 font-medium">Monitoring PKL</span>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-xs font-black tracking-wider text-white block uppercase">Admin Pusat</span>
-                    <span class="text-[10px] text-blue-300 font-medium">Monitoring PKL</span>
-                </div>
+                <!-- Tombol Close Sidebar Khusus Mobile -->
+                <button type="button" onclick="toggleSidebar()" class="md:hidden text-blue-200 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
 
             <!-- Navigation Links -->
@@ -57,9 +68,14 @@
                     <span>Dashboard</span>
                 </a>
                 <a href="#manajemen" onclick="switchTab('manajemen')"
-                    class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors">
-                    <i class="fa-solid fa-users-gear w-5 text-center"></i>
-                    <span>Manajemen Akun</span>
+                    class="nav-link flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-users-gear w-5 text-center"></i>
+                        <span>Manajemen Akun</span>
+                    </div>
+                    @if(isset($pendingUsersCount) && $pendingUsersCount > 0)
+                        <span class="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm animate-pulse">{{ $pendingUsersCount }}</span>
+                    @endif
                 </a>
                 <a href="#plotting" onclick="switchTab('plotting')"
                     class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors">
@@ -80,11 +96,14 @@
 
             <!-- Sidebar Footer / Logout -->
             <div class="p-4 border-t border-blue-950">
-                <a href="/"
-                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/15 transition text-xs font-semibold">
-                    <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>
-                    <span>Keluar</span>
-                </a>
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/15 transition text-xs font-semibold">
+                        <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>
+                        <span>Keluar</span>
+                    </button>
+                </form>
             </div>
         </aside>
 
@@ -537,6 +556,91 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- TABEL VERIFIKASI PENDAFTARAN AKUN BARU (PENDING APPROVAL) -->
+                    @if(isset($pendingUsers) && $pendingUsers->count() > 0)
+                        <div class="bg-amber-50/80 border-2 border-amber-300 rounded-2xl p-6 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30 flex-shrink-0">
+                                        <i class="fa-solid fa-user-clock text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-amber-950 text-base flex items-center gap-2">
+                                            Antrean Persetujuan Pendaftaran Akun Baru
+                                            <span class="bg-amber-500 text-white text-xs px-2.5 py-0.5 rounded-full font-extrabold">{{ $pendingUsers->count() }} Menunggu</span>
+                                        </h4>
+                                        <p class="text-xs text-amber-800">Pengguna berikut telah mendaftar mandiri dan memerlukan persetujuan Admin sebelum dapat masuk ke sistem.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto bg-white rounded-xl border border-amber-200">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="bg-amber-100/70 text-amber-950 font-bold border-b border-amber-200">
+                                            <th class="p-3">Nama Pendaftar</th>
+                                            <th class="p-3">Peran (Role)</th>
+                                            <th class="p-3">Identitas / Afiliasi</th>
+                                            <th class="p-3">Email & Kontak</th>
+                                            <th class="p-3">Waktu Daftar</th>
+                                            <th class="p-3 text-center">Tindakan Admin</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-amber-100">
+                                        @foreach($pendingUsers as $pending)
+                                            <tr class="hover:bg-amber-50/50 transition">
+                                                <td class="p-3 font-bold text-slate-800">{{ $pending->name }}</td>
+                                                <td class="p-3">
+                                                    @if($pending->role === 'siswa')
+                                                        <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold uppercase">Siswa</span>
+                                                    @elseif($pending->role === 'pembimbing')
+                                                        <span class="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-[10px] font-bold uppercase">Guru Pembimbing</span>
+                                                    @elseif($pending->role === 'mentor')
+                                                        <span class="px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full text-[10px] font-bold uppercase">Mentor DUDI</span>
+                                                    @endif
+                                                </td>
+                                                <td class="p-3 text-slate-600">
+                                                    @if($pending->role === 'siswa')
+                                                        <div>
+                                                            <span class="font-semibold">NIS:</span> {{ $pending->nis ?? '-' }} | 
+                                                            <span class="font-semibold">NISN:</span> {{ $pending->nisn ?? '-' }}
+                                                        </div>
+                                                        <div class="text-[11px] font-semibold text-schoolblue">{{ $pending->departemen ?? '-' }}</div>
+                                                    @elseif($pending->role === 'pembimbing')
+                                                        <div><span class="font-semibold">NIP:</span> {{ $pending->nip ?? '-' }}</div>
+                                                    @elseif($pending->role === 'mentor')
+                                                        <div class="font-semibold text-slate-800">{{ $pending->tempat_dudi ?? '-' }}</div>
+                                                    @endif
+                                                </td>
+                                                <td class="p-3 text-slate-600">
+                                                    <div>{{ $pending->email }}</div>
+                                                    <div class="text-[11px] text-slate-400">{{ $pending->phone ?? '-' }}</div>
+                                                </td>
+                                                <td class="p-3 text-slate-500">{{ $pending->created_at ? $pending->created_at->diffForHumans() : '-' }}</td>
+                                                <td class="p-3 text-center">
+                                                    <div class="flex items-center justify-center gap-2">
+                                                        <form action="{{ route('admin.users.approve', $pending->id) }}" method="POST" onsubmit="return confirm('Setujui dan aktifkan akun {{ $pending->name }}?')">
+                                                            @csrf
+                                                            <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm flex items-center gap-1 transition">
+                                                                <i class="fa-solid fa-check"></i> Setujui
+                                                            </button>
+                                                        </form>
+                                                        <form action="{{ route('admin.users.reject', $pending->id) }}" method="POST" onsubmit="return confirm('Tolak pendaftaran akun {{ $pending->name }}?')">
+                                                            @csrf
+                                                            <button type="submit" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs shadow-sm flex items-center gap-1 transition">
+                                                                <i class="fa-solid fa-xmark"></i> Tolak
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
 
                     <!-- Panel Tabel Data & Pencarian -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -1208,20 +1312,30 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">Nama Resmi Sekolah</label>
-                            <input type="text" name="nama_sekolah" value="{{ session('set_nama_sekolah', 'SMKN 1 Depok') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
+                            <input type="text" name="nama_sekolah" value="{{ \App\Models\Setting::get('school_name', 'SMK Negeri 1 Depok') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Lengkap</label>
-                            <input type="text" name="alamat" value="{{ session('set_alamat', 'Jl. Raya Bogor KM. 33, Cisalak, Sukmajaya, Depok') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
+                            <input type="text" name="alamat" value="{{ \App\Models\Setting::get('school_address', 'Jl. Raya Tapos, Gg. Bhakti Suci No. 100, Cimpaeun, Tapos, Kota Depok, Jawa Barat 16459') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1">Email Resmi</label>
-                                <input type="email" name="email" value="{{ session('set_email', 'info@smkn1depok.sch.id') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
+                                <input type="email" name="email" value="{{ \App\Models\Setting::get('school_email', 'smkn1depok@gmail.com') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Telepon / Kontak</label>
-                                <input type="text" name="telepon" value="{{ session('set_telepon', '(021) 8740631') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Telepon / Fax</label>
+                                <input type="text" name="telepon" value="{{ \App\Models\Setting::get('school_phone', '(021) 8790-7233') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">WhatsApp (Hanya Chat)</label>
+                                <input type="text" name="whatsapp" value="{{ \App\Models\Setting::get('school_whatsapp', '0877-4444-5006') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Website Resmi</label>
+                                <input type="text" name="website" value="{{ \App\Models\Setting::get('school_website', 'https://www.smkn1depok.sch.id/') }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-schoolblue">
                             </div>
                         </div>
                     </div>
@@ -1282,20 +1396,28 @@
                 }
             });
 
-            // Tutup sidebar otomatis di perangkat mobile setelah diklik
-            const sidebar = document.getElementById('sidebar');
+            // Tutup sidebar otomatis di perangkat mobile / tablet setelah diklik
             if (window.innerWidth < 768) {
-                sidebar.classList.add('hidden');
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+                    toggleSidebar();
+                }
             }
         }
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('hidden');
-            if (!sidebar.classList.contains('hidden')) {
-                sidebar.classList.add('absolute', 'inset-y-0', 'left-0');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar || !overlay) return;
+
+            sidebar.classList.toggle('-translate-x-full');
+            if (overlay.classList.contains('opacity-0')) {
+                overlay.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                overlay.classList.add('opacity-0', 'pointer-events-none');
             }
         }
+
         // Fungsi khusus untuk sub-menu di dalam Halaman Setting
         function switchSettingSub(subId) {
             const sections = document.querySelectorAll('.setting-section');
@@ -1315,13 +1437,6 @@
             event.currentTarget.classList.remove('text-slate-600', 'font-semibold', 'hover:bg-slate-50',
                 'hover:text-schoolnavy');
             event.currentTarget.classList.add('bg-blue-50', 'text-schoolblue', 'font-bold');
-        }
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('hidden');
-            sidebar.classList.toggle('absolute');
-            sidebar.classList.toggle('h-full');
         }
 
         function openModalKelompok(tempatDudi, mentorId) {
@@ -1446,6 +1561,13 @@
 
             closeModalCetak();
         }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && document.getElementById('tab-' + hash)) {
+                switchTab(hash);
+            }
+        });
     </script>
 </body>
 
