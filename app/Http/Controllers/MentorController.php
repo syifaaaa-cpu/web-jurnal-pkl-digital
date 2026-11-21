@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use App\Models\Grade;
 use App\Models\Logbook;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,7 +44,16 @@ class MentorController extends Controller
         $totalSiswa = $siswas->count();
         $perluValidasi = $logbooks->where('status', 'Pending')->count();
 
-        return view('dashboards.mentor-dudi', compact('siswas', 'logbooks', 'totalSiswa', 'perluValidasi'));
+        // Hitung siswa bimbingan yang tercatat hadir hari ini
+        $hadirHariIni = Attendance::whereIn('user_id', $studentIds)
+            ->whereDate('tanggal', Carbon::today())
+            ->where(function ($q): void {
+                $q->where('status', 'like', '%Hadir%')
+                    ->orWhere('status', 'like', '%Diluar%');
+            })
+            ->count();
+
+        return view('dashboards.mentor-dudi', compact('siswas', 'logbooks', 'totalSiswa', 'perluValidasi', 'hadirHariIni'));
     }
 
     /**
@@ -111,18 +122,41 @@ class MentorController extends Controller
         ) / 4;
 
         // --- LANGKAH 4: Simpan atau Perbarui Nilai DUDI ke Tabel Grades ---
+        $existingGrade = Grade::where('student_id', $student->id)->first();
+        $nilaiLaporan = $existingGrade && $existingGrade->nilai_laporan !== null ? (float) $existingGrade->nilai_laporan : null;
+
+        $gradeData = [
+            'mentor_id' => Auth::id(),
+            'nilai_teknis' => (float) $request->nilai_teknis,
+            'nilai_disiplin' => (float) $request->nilai_disiplin,
+            'nilai_kerjasama' => (float) $request->nilai_kerjasama,
+            'nilai_inisiatif' => (float) $request->nilai_inisiatif,
+            'nilai_dudi' => round($nilaiDudi, 2),
+            'catatan_mentor' => $request->catatan,
+            'updated_at' => now(),
+        ];
+
+        // Sinkronisasi Dual-Assessment: Jika nilai laporan sekolah sudah ada, hitung ulang nilai akhir & predikat
+        if ($nilaiLaporan !== null) {
+            $nilaiAkhir = ($nilaiDudi * 0.60) + ($nilaiLaporan * 0.40);
+            $predikat = 'C';
+            if ($nilaiAkhir >= 85) {
+                $predikat = 'A';
+            } elseif ($nilaiAkhir >= 75) {
+                $predikat = 'B';
+            } elseif ($nilaiAkhir >= 60) {
+                $predikat = 'C';
+            } else {
+                $predikat = 'D';
+            }
+
+            $gradeData['nilai_akhir'] = round($nilaiAkhir, 2);
+            $gradeData['predikat'] = $predikat;
+        }
+
         Grade::updateOrInsert(
             ['student_id' => $student->id],
-            [
-                'mentor_id' => Auth::id(),
-                'nilai_teknis' => (float) $request->nilai_teknis,
-                'nilai_disiplin' => (float) $request->nilai_disiplin,
-                'nilai_kerjasama' => (float) $request->nilai_kerjasama,
-                'nilai_inisiatif' => (float) $request->nilai_inisiatif,
-                'nilai_dudi' => round($nilaiDudi, 2),
-                'catatan_mentor' => $request->catatan,
-                'updated_at' => now(),
-            ]
+            $gradeData
         );
 
         return back()->with('success', 'Nilai akhir PKL dari Mentor berhasil disimpan!');

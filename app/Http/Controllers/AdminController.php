@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\Grade;
 use App\Models\Setting;
 use App\Models\User;
 use Carbon\Carbon;
@@ -243,7 +244,12 @@ class AdminController extends Controller
      */
     public function destroyUser(int|string $id): RedirectResponse
     {
-        $user = User::findOrFail((int) $id);
+        $userId = (int) $id;
+        if ($userId === (int) Auth::id()) {
+            return back()->withErrors(['error' => 'Anda tidak dapat menghapus akun Anda sendiri saat sedang masuk.']);
+        }
+
+        $user = User::findOrFail($userId);
         $user->delete();
 
         return back()->with('success', 'Akun pengguna berhasil dihapus!');
@@ -306,14 +312,37 @@ class AdminController extends Controller
             $safeEmail = htmlspecialchars($siswa->email, ENT_QUOTES, 'UTF-8');
             $safeDudi = htmlspecialchars($siswa->tempat_dudi ?? 'Belum Diplotting', ENT_QUOTES, 'UTF-8');
 
+            // Kalkulasi kehadiran riil siswa dari database
+            $totalHadir = Attendance::where('user_id', $siswa->id)
+                ->where(function ($q): void {
+                    $q->where('status', 'like', '%Hadir%')
+                        ->orWhere('status', 'like', '%Diluar%');
+                })
+                ->count();
+            $targetHari = 30;
+            $persenKehadiran = $targetHari > 0 ? min(round(($totalHadir / $targetHari) * 100), 100) : 0;
+            $strKehadiran = "{$persenKehadiran}% ({$totalHadir} Hari)";
+
+            // Ambil data nilai riil siswa dari tabel grades
+            $grade = Grade::where('student_id', $siswa->id)->first();
+            if ($grade && $grade->nilai_akhir !== null) {
+                $strNilai = "{$grade->nilai_akhir} ({$grade->predikat})";
+            } elseif ($grade && $grade->nilai_dudi !== null) {
+                $strNilai = "{$grade->nilai_dudi} (Nilai DUDI)";
+            } else {
+                $strNilai = 'Belum Dinilai';
+            }
+
+            $safeStatus = $siswa->status === 'approved' ? 'Aktif' : ucfirst($siswa->status ?? 'Aktif');
+
             $html .= '<tr>
                 <td>'.$no++.'</td>
                 <td><b>'.$safeName.'</b></td>
                 <td>'.$safeEmail.'</td>
                 <td>'.$safeDudi.'</td>
-                <td>95%</td>
-                <td>88 (Baik Sekali)</td>
-                <td>Aktif</td>
+                <td>'.$strKehadiran.'</td>
+                <td>'.$strNilai.'</td>
+                <td>'.$safeStatus.'</td>
             </tr>';
         }
 
@@ -533,7 +562,11 @@ class AdminController extends Controller
             'kuota_dudi' => 'required|integer',
         ]);
 
+        Setting::set('tahun_ajaran', $request->tahun_ajaran);
+        Setting::set('gelombang', $request->gelombang);
+        Setting::set('tanggal_mulai', $request->tanggal_mulai);
         Setting::set('tanggal_selesai', $request->tanggal_selesai);
+        Setting::set('status_lockdown', $request->status_lockdown);
         Setting::set('kuota_dudi', (string) $request->kuota_dudi);
 
         session([
@@ -564,6 +597,12 @@ class AdminController extends Controller
         Setting::set('email_resmi', $request->email_resmi);
         Setting::set('telepon_resmi', $request->telepon);
 
+        // Sinkronisasi alias untuk profil sekolah
+        Setting::set('school_name', $request->nama_sekolah);
+        Setting::set('school_address', $request->alamat);
+        Setting::set('school_email', $request->email_resmi);
+        Setting::set('school_phone', $request->telepon);
+
         return back()->with('success', 'Pengaturan Identitas Sekolah berhasil diperbarui!');
     }
 
@@ -585,6 +624,12 @@ class AdminController extends Controller
         Setting::set('school_address', $request->alamat);
         Setting::set('school_email', $request->email);
         Setting::set('school_phone', $request->telepon);
+
+        // Sinkronisasi alias untuk pengaturan umum
+        Setting::set('nama_sekolah', $request->nama_sekolah);
+        Setting::set('alamat_sekolah', $request->alamat);
+        Setting::set('email_resmi', $request->email);
+        Setting::set('telepon_resmi', $request->telepon);
 
         if ($request->filled('whatsapp')) {
             Setting::set('school_whatsapp', $request->whatsapp);

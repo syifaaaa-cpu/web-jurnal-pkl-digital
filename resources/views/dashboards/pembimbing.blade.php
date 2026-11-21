@@ -554,7 +554,7 @@
                         </div>
 
                         <!-- Filter Select DUDI untuk Nilai secara Dinamis -->
-                        <form method="GET" action="{{ route('dashboard.pembimbing') }}"
+                        <form method="GET" action="{{ route('dashboard.pembimbing') }}#nilai"
                             class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div class="w-full sm:w-1/2 space-y-1">
                                 <label class="text-xs font-semibold text-slate-600 block">Pilih Instansi / Mitra
@@ -707,7 +707,8 @@
                                     <label class="text-xs font-semibold text-slate-600 block">Nomor Induk Pegawai
                                         (NIP)</label>
                                     <input type="text" name="nip"
-                                        value="{{ $user->nip ?? '196805121994032001' }}"
+                                        value="{{ $user->nip ?? '' }}"
+                                        placeholder="Contoh: 196805121994032001"
                                         class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs bg-white focus:outline-none focus:border-schoolblue font-medium text-slate-700">
                                 </div>
                             </div>
@@ -717,7 +718,8 @@
                                     <label class="text-xs font-semibold text-slate-600 block">Nomor Telepon /
                                         WhatsApp</label>
                                     <input type="text" name="phone"
-                                        value="{{ $user->phone ?? '0812-9876-5432' }}"
+                                        value="{{ $user->phone ?? '' }}"
+                                        placeholder="Contoh: 081298765432"
                                         class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs bg-white focus:outline-none focus:border-schoolblue font-medium text-slate-700">
                                 </div>
                                 <div class="space-y-1.5">

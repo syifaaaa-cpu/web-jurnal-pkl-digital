@@ -53,4 +53,29 @@ class LogbookController extends Controller
 
         return redirect('/dashboard/siswa')->with('success', 'Logbook kegiatan harian berhasil dikirim!');
     }
+
+    /**
+     * Memperbarui logbook harian siswa (terutama saat status Revisi).
+     */
+    public function update(Request $request, int|string $id): RedirectResponse
+    {
+        $logbook = Logbook::where('user_id', Auth::id())->findOrFail((int) $id);
+
+        $request->validate([
+            'tanggal' => 'required|date',
+            'jam_kerja' => 'required|string|max:50',
+            'judul_kegiatan' => 'required|string|max:255',
+            'deskripsi' => 'required|string',
+        ]);
+
+        $logbook->update([
+            'tanggal' => $request->tanggal,
+            'jam_kerja' => $request->jam_kerja,
+            'judul_kegiatan' => $request->judul_kegiatan,
+            'deskripsi' => $request->deskripsi,
+            'status' => 'Pending',
+        ]);
+
+        return redirect('/dashboard/siswa')->with('success', 'Logbook berhasil diperbarui dan diajukan ulang untuk validasi mentor!');
+    }
 }

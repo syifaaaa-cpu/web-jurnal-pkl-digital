@@ -186,7 +186,7 @@
                             <div>
                                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Hadir Hari Ini
                                 </p>
-                                <h4 class="text-2xl font-bold text-slate-800">{{ $totalSiswa ?? 0 }} Siswa</h4>
+                                <h4 class="text-2xl font-bold text-slate-800">{{ $hadirHariIni ?? 0 }} Siswa</h4>
                             </div>
                         </div>
                         <div
@@ -335,11 +335,11 @@
                                     </div>
                                     <div class="flex items-center space-x-2">
                                         <label class="text-xs font-semibold text-slate-600">Siswa:</label>
-                                        <select
+                                        <select id="filter-val-siswa" onchange="filterValSiswa(this.value)"
                                             class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:border-schoolblue">
-                                            <option>Semua Siswa</option>
+                                            <option value="all">Semua Siswa</option>
                                             @foreach ($siswas ?? [] as $s)
-                                                <option>{{ $s->name }}</option>
+                                                <option value="{{ $s->id }}">{{ $s->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -350,8 +350,8 @@
                             </div>
 
                             @forelse($logbooks ?? [] as $logbook)
-                                <div
-                                    class="border border-slate-200 rounded-2xl p-5 hover:border-schoolblue/50 transition bg-white space-y-4 shadow-sm">
+                                <div data-student-id="{{ $logbook->user_id }}"
+                                    class="val-card border border-slate-200 rounded-2xl p-5 hover:border-schoolblue/50 transition bg-white space-y-4 shadow-sm">
                                     <div
                                         class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
                                         <div class="flex items-center space-x-3">
@@ -363,7 +363,7 @@
                                                 <span
                                                     class="font-bold text-slate-800 text-sm block">{{ $logbook->user->name ?? 'Siswa' }}</span>
                                                 <span
-                                                    class="text-xs text-slate-500">{{ $logbook->user->jurusan ?? 'Rekayasa Perangkat Lunak' }}</span>
+                                                    class="text-xs text-slate-500">{{ $logbook->user->departemen ?? 'PPLG' }}</span>
                                             </div>
                                         </div>
                                         <span
@@ -415,10 +415,11 @@
                                 class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
                                 <div class="flex items-center space-x-3 w-full sm:w-auto">
                                     <label class="text-xs font-semibold text-slate-600">Pilih Siswa:</label>
-                                    <select
+                                    <select id="filter-rekap-siswa" onchange="filterRekapSiswa(this.value)"
                                         class="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none focus:border-schoolblue">
+                                        <option value="all">Semua Siswa</option>
                                         @foreach ($siswas ?? [] as $s)
-                                            <option>{{ $s->name }} ({{ $s->jurusan ?? 'RPL' }})</option>
+                                            <option value="{{ $s->id }}">{{ $s->name }} ({{ $s->departemen ?? 'PPLG' }})</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -448,10 +449,12 @@
                                         </thead>
                                         <tbody class="divide-y divide-slate-100">
                                             @forelse($logbooks ?? [] as $logbook)
-                                                <tr>
+                                                <tr class="rekap-row" data-student-id="{{ $logbook->user_id }}">
                                                     <td class="py-3 px-3 text-slate-600">{{ $logbook->tanggal }}</td>
                                                     <td class="py-3 px-3 text-slate-800 font-medium">
-                                                        {{ $logbook->judul_kegiatan }}</td>
+                                                        <div>{{ $logbook->judul_kegiatan }}</div>
+                                                        <div class="text-[11px] text-slate-400">{{ $logbook->user->name ?? 'Siswa' }}</div>
+                                                    </td>
                                                     <td class="py-3 px-3 text-slate-500">
                                                         {{ $logbook->catatan_mentor ?? '-' }}</td>
                                                     <td class="py-3 px-3 text-center">
@@ -656,6 +659,28 @@
                 document.getElementById('btn-sub-val').className =
                     "px-4 py-2 rounded-lg text-slate-500 hover:text-schoolnavy transition";
             }
+        }
+
+        function filterValSiswa(studentId) {
+            const cards = document.querySelectorAll('.val-card');
+            cards.forEach(card => {
+                if (studentId === 'all' || card.getAttribute('data-student-id') === studentId) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function filterRekapSiswa(studentId) {
+            const rows = document.querySelectorAll('.rekap-row');
+            rows.forEach(row => {
+                if (studentId === 'all' || row.getAttribute('data-student-id') === studentId) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
     </script>
 </body>

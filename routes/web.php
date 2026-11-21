@@ -80,6 +80,7 @@ Route::middleware(['auth', 'role:siswa'])->group(function () {
     Route::get('/dashboard/siswa', [SiswaController::class, 'index'])->name('dashboard.siswa');
     Route::get('/dashboard/siswa/logbook/create', [LogbookController::class, 'create'])->name('siswa.logbook.create');
     Route::post('/dashboard/siswa/logbook', [LogbookController::class, 'store'])->name('siswa.logbook.store')->middleware('throttle:15,1');
+    Route::put('/dashboard/siswa/logbook/{id}', [LogbookController::class, 'update'])->name('siswa.logbook.update')->middleware('throttle:15,1');
     Route::post('/dashboard/siswa/attendance', [AttendanceController::class, 'store'])->name('attendance.store')->middleware('throttle:10,1');
     Route::put('/dashboard/siswa/profile/update', [SiswaController::class, 'updateProfile'])->name('siswa.profile.update');
     Route::put('/dashboard/siswa/password/update', [SiswaController::class, 'updatePassword'])->name('siswa.password.update')->middleware('throttle:5,1');

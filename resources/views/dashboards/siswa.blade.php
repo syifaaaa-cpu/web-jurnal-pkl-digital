@@ -377,6 +377,75 @@
                             </div>
                         @endif
                     </div>
+
+                    <!-- Kartu Status Nilai Akhir & Sertifikat PKL (Dual Assessment) -->
+                    <div class="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-4">
+                            <div>
+                                <h3 class="font-black text-xs sm:text-sm text-gray-900 tracking-tight flex items-center gap-2">
+                                    <i data-lucide="award" class="w-4 h-4 text-schoolblue"></i> Rekap Penilaian Akhir & Sertifikat PKL
+                                </h3>
+                                <p class="text-xs text-slate-500">Sistem penilaian ganda: Nilai Industri DUDI (60%) dan Nilai Laporan Sekolah (40%).</p>
+                            </div>
+                            @if(isset($grade) && $grade->nilai_akhir !== null)
+                                <a href="{{ route('export.sertifikat') }}"
+                                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Unduh Sertifikat Resmi (.doc)
+                                </a>
+                            @endif
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                            <!-- Nilai DUDI -->
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/60">
+                                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Nilai DUDI (60%)</span>
+                                <span class="text-xl font-black text-gray-900 mt-1 block">
+                                    {{ isset($grade) && $grade->nilai_dudi !== null ? number_format($grade->nilai_dudi, 1) : 'Belum Ada' }}
+                                </span>
+                                <span class="text-[10px] text-slate-500">Dari Pembimbing Lapangan</span>
+                            </div>
+
+                            <!-- Nilai Laporan -->
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/60">
+                                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Nilai Laporan (40%)</span>
+                                <span class="text-xl font-black text-gray-900 mt-1 block">
+                                    {{ isset($grade) && $grade->nilai_laporan !== null ? number_format($grade->nilai_laporan, 1) : 'Belum Ada' }}
+                                </span>
+                                <span class="text-[10px] text-slate-500">Dari Pembimbing Sekolah</span>
+                            </div>
+
+                            <!-- Nilai Akhir -->
+                            <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-200/60">
+                                <span class="text-[11px] font-bold text-schoolblue uppercase tracking-wider block">Nilai Akhir</span>
+                                <span class="text-xl font-black text-schoolnavy mt-1 block">
+                                    {{ isset($grade) && $grade->nilai_akhir !== null ? number_format($grade->nilai_akhir, 1) : 'Menunggu' }}
+                                </span>
+                                <span class="text-[10px] text-blue-600 font-semibold">Skala 0 - 100</span>
+                            </div>
+
+                            <!-- Predikat Kelulusan -->
+                            <div class="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/60">
+                                <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">Predikat</span>
+                                <span class="text-xl font-black text-emerald-700 mt-1 block">
+                                    {{ isset($grade) && $grade->predikat ? $grade->predikat : '-' }}
+                                </span>
+                                <span class="text-[10px] text-emerald-600 font-semibold">
+                                    @if(isset($grade) && $grade->predikat === 'A') Sangat Baik
+                                    @elseif(isset($grade) && $grade->predikat === 'B') Baik
+                                    @elseif(isset($grade) && $grade->predikat === 'C') Cukup
+                                    @elseif(isset($grade) && $grade->predikat === 'D') Kurang
+                                    @else Belum Lengkap
+                                    @endif
+                                </span>
+                            </div>
+                        </div>
+
+                        @if(isset($grade) && $grade->catatan_mentor)
+                            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-600">
+                                <strong class="text-slate-800">Umpan Balik Mentor DUDI:</strong> {{ $grade->catatan_mentor }}
+                            </div>
+                        @endif
+                    </div>
                 </div>
                 <!-- TAB 2: ATTENDANCE -->
                 <div id="tab-attendance" class="tab-content hidden space-y-6">
@@ -910,13 +979,48 @@
                                         @endif
                                     </div>
 
-                                    <div>
+                                    <div class="flex flex-col items-end gap-2">
                                         @if ($logbook->status == 'Approved')
                                             <span
                                                 class="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">Approved</span>
                                         @elseif($logbook->status == 'Revisi')
                                             <span
                                                 class="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700">Revisi</span>
+                                            <details class="text-right">
+                                                <summary class="cursor-pointer text-[11px] font-bold text-schoolblue hover:underline">
+                                                    Perbaiki Logbook
+                                                </summary>
+                                                <div class="mt-2 text-left p-4 bg-slate-50 border border-slate-200 rounded-xl w-72 sm:w-96 shadow-lg z-20 relative">
+                                                    <form action="{{ route('siswa.logbook.update', $logbook->id) }}" method="POST" class="space-y-3">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <h5 class="font-bold text-xs text-schoolnavy">Perbaiki & Ajukan Ulang Jurnal</h5>
+                                                        <div>
+                                                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Tanggal</label>
+                                                            <input type="date" name="tanggal" value="{{ $logbook->tanggal }}" required
+                                                                class="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white">
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Jam Kerja</label>
+                                                            <input type="text" name="jam_kerja" value="{{ $logbook->jam_kerja }}" required
+                                                                class="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white">
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Judul Kegiatan</label>
+                                                            <input type="text" name="judul_kegiatan" value="{{ $logbook->judul_kegiatan }}" required
+                                                                class="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white">
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Deskripsi Kegiatan</label>
+                                                            <textarea name="deskripsi" rows="3" required
+                                                                class="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white">{{ $logbook->deskripsi }}</textarea>
+                                                        </div>
+                                                        <button type="submit" class="w-full py-2 bg-schoolblue hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition">
+                                                            Simpan & Kirim Ulang
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </details>
                                         @else
                                             <span
                                                 class="text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-700">Pending</span>
@@ -1009,11 +1113,22 @@
                                         disabled>
                                 </div>
                                 <div class="space-y-1 sm:col-span-3">
-                                    <label class="font-bold text-slate-500">Tempat DUDI (Dunia Usaha / Dunia
-                                        Industri)</label>
-                                    <input type="text" name="tempat_dudi" value="{{ Auth::user()->tempat_dudi }}"
-                                        placeholder="Contoh: PT. Ciptadra Softindo" required
+                                    <label class="font-bold text-slate-700">Nomor WhatsApp / Kontak Aktif Siswa</label>
+                                    <input type="text" name="phone" value="{{ Auth::user()->phone }}"
+                                        placeholder="Contoh: 081234567890"
                                         class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-gray-800 font-semibold focus:outline-none focus:border-schoolblue shadow-sm">
+                                    <p class="text-[11px] text-slate-400">Nomor ini digunakan oleh Pembimbing Sekolah & DUDI untuk koordinasi dan monitoring bimbingan.</p>
+                                </div>
+
+                                <div class="space-y-1 sm:col-span-3">
+                                    <div class="flex items-center justify-between">
+                                        <label class="font-bold text-slate-500">Tempat DUDI (Dunia Usaha / Dunia Industri)</label>
+                                        <span class="text-[10px] bg-blue-50 text-schoolblue px-2 py-0.5 rounded-full font-bold">Penempatan Resmi Hubin</span>
+                                    </div>
+                                    <input type="text" value="{{ Auth::user()->tempat_dudi ?? 'Belum Diplotting' }}"
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-gray-800 font-medium"
+                                        disabled>
+                                    <p class="text-[11px] text-slate-400">*Penempatan DUDI dan koordinat geofence presensi resmi dikelola terpusat oleh Pokja Hubin demi integritas sistem.</p>
                                 </div>
 
                                 <!-- Input Latitude & Longitude Tersembunyi dari Peta -->
@@ -1027,10 +1142,10 @@
                             <div class="space-y-3 pt-2">
                                 <div
                                     class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                    <label class="font-bold text-slate-700">Cari & Pilih Titik Lokasi DUDI</label>
+                                    <label class="font-bold text-slate-700">Titik Koordinat Lokasi DUDI Terdaftar</label>
                                     <button type="button" onclick="useCurrentLocation()"
                                         class="px-3 py-1.5 bg-blue-50 text-schoolblue hover:bg-blue-100 font-bold rounded-xl transition flex items-center gap-1.5 text-[11px]">
-                                        <i data-lucide="crosshair" class="w-3.5 h-3.5"></i> Gunakan Lokasi Saya Saat
+                                        <i data-lucide="crosshair" class="w-3.5 h-3.5"></i> Cek Lokasi Saya Saat
                                         Ini
                                     </button>
                                 </div>
@@ -1051,14 +1166,13 @@
 
                                 <div id="dudiMap" class="w-full h-72 rounded-2xl border border-slate-200 z-10">
                                 </div>
-                                <p class="text-[11px] text-slate-400">*Ketik nama tempat lalu klik "Cari Lokasi", atau
-                                    geser (drag) marker merah di peta untuk presisi akurat.</p>
+                                <p class="text-[11px] text-slate-400">*Titik radius presensi GPS siswa diverifikasi berdasarkan koordinat kantor industri resmi di atas.</p>
                             </div>
 
                             <div class="pt-4 border-t border-slate-100 flex justify-end">
                                 <button type="submit"
                                     class="w-full sm:w-auto bg-schoolblue hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md transition">
-                                    Simpan Perubahan Profil & Lokasi
+                                    Simpan Perubahan Kontak Profil
                                 </button>
                             </div>
                         </form>
