@@ -39,7 +39,7 @@
             <!-- Tanggal Kegiatan -->
             <div class="mb-4">
                 <label class="block text-gray-700 text-xs font-bold uppercase mb-2">Tanggal Kegiatan</label>
-                <input type="date" name="tanggal" required class="w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-schoolblue">
+                <input type="date" name="tanggal" value="{{ old('tanggal', date('Y-m-d')) }}" required class="w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-schoolblue">
             </div>
 
             <!-- Jam Kerja -->

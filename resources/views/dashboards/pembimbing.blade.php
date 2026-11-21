@@ -451,25 +451,34 @@
                                 <tbody class="divide-y divide-slate-100 text-xs">
                                     @forelse($siswasMonitoring ?? [] as $siswa)
                                         @php
-                                            // Hitung rekap absensi real-time dari tabel attendances
-                                            $hadir = DB::table('attendances')
+                                            // Ambil rekap absensi dari properti agregasi withCount (atau fallback DB query jika view dipanggil terisolasi)
+                                            $hadir = $siswa->hadir_count ?? DB::table('attendances')
                                                 ->where('user_id', $siswa->id)
-                                                ->where('status', 'like', '%Hadir%')
+                                                ->where(function ($q) {
+                                                    $q->where('status', 'like', '%Hadir%')
+                                                      ->orWhere('status', 'like', '%Diluar%');
+                                                })
                                                 ->count();
-                                            $izin = DB::table('attendances')
+                                            $izin = $siswa->izin_count ?? DB::table('attendances')
                                                 ->where('user_id', $siswa->id)
                                                 ->where('status', 'like', '%Izin%')
                                                 ->count();
-                                            $sakit = DB::table('attendances')
+                                            $sakit = $siswa->sakit_count ?? DB::table('attendances')
                                                 ->where('user_id', $siswa->id)
                                                 ->where('status', 'like', '%Sakit%')
                                                 ->count();
+                                            $diluarRadius = $siswa->diluar_radius_count ?? DB::table('attendances')
+                                                ->where('user_id', $siswa->id)
+                                                ->where('status', 'like', '%Diluar%')
+                                                ->count();
 
                                             // Ambil logbook / aktivitas terakhir siswa
-                                            $lastLogbook = DB::table('logbooks')
-                                                ->where('user_id', $siswa->id)
-                                                ->latest('created_at')
-                                                ->first();
+                                            $lastLogbook = $siswa->relationLoaded('logbooks')
+                                                ? $siswa->logbooks->first()
+                                                : DB::table('logbooks')
+                                                    ->where('user_id', $siswa->id)
+                                                    ->latest('created_at')
+                                                    ->first();
                                         @endphp
                                         <tr class="hover:bg-slate-50">
                                             <td class="py-3 px-4">
@@ -480,16 +489,20 @@
                                             </td>
                                             <!-- Perbaikan tampilan absensi agar tersusun rapi ke samping -->
                                             <td class="py-3 px-4 whitespace-nowrap">
-                                                <div class="inline-flex items-center space-x-1.5">
+                                                <div class="inline-flex items-center space-x-1.5 flex-wrap gap-y-1">
                                                     <span
-                                                        class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded-md text-[11px]">{{ $hadir }}
-                                                        Hadir</span>
+                                                        class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded-md text-[11px]">{{ $hadir }} Hadir</span>
                                                     <span
-                                                        class="bg-amber-100 text-amber-800 font-semibold px-2 py-1 rounded-md text-[11px]">{{ $izin }}
-                                                        Izin</span>
+                                                        class="bg-amber-100 text-amber-800 font-semibold px-2 py-1 rounded-md text-[11px]">{{ $izin }} Izin</span>
                                                     <span
-                                                        class="bg-purple-100 text-purple-800 font-semibold px-2 py-1 rounded-md text-[11px]">{{ $sakit }}
-                                                        Sakit</span>
+                                                        class="bg-purple-100 text-purple-800 font-semibold px-2 py-1 rounded-md text-[11px]">{{ $sakit }} Sakit</span>
+                                                    @if ($diluarRadius > 0)
+                                                        <span
+                                                            class="bg-rose-50 text-rose-700 font-medium px-1.5 py-0.5 rounded text-[10px] border border-rose-200"
+                                                            title="{{ $diluarRadius }} presensi tercatat di luar radius koordinat DUDI">
+                                                            ({{ $diluarRadius }} Luar Radius)
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </td>
                                             <td class="py-3 px-4 text-slate-600">
@@ -797,6 +810,14 @@
                 overlay.classList.add('opacity-0', 'pointer-events-none');
             }
         }
+
+        // Buka tab otomatis berdasarkan URL hash (misal #monitoring)
+        document.addEventListener('DOMContentLoaded', function () {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && document.getElementById('tab-' + hash)) {
+                switchTab(hash);
+            }
+        });
     </script>
 </body>
 

@@ -21,9 +21,6 @@ class PembimbingController extends Controller
 {
     /**
      * Menampilkan dashboard utama untuk Guru Pembimbing Sekolah.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Contracts\View\View
      */
     public function index(Request $request): View
     {
@@ -38,9 +35,18 @@ class PembimbingController extends Controller
         // Ambil daftar DUDIKA unik yang bermitra dengan sekolah
         $dudis = User::where('role', 'siswa')
             ->whereNotNull('tempat_dudi')
-            ->select('tempat_dudi', 'mentor_id')
+            ->select('tempat_dudi')
             ->distinct()
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $mentorUser = User::where('role', 'siswa')
+                    ->where('tempat_dudi', $item->tempat_dudi)
+                    ->whereNotNull('mentor_id')
+                    ->first();
+                $item->mentor_id = $mentorUser?->mentor_id;
+
+                return $item;
+            });
 
         $totalInstansi = $dudis->count();
 
@@ -58,6 +64,7 @@ class PembimbingController extends Controller
         if ($selectedDudi) {
             $siswasBimbingan = User::where('role', 'siswa')
                 ->where('tempat_dudi', $selectedDudi)
+                ->with('grade')
                 ->get();
         }
 
@@ -67,6 +74,26 @@ class PembimbingController extends Controller
         if ($selectedMonitoringDudi) {
             $siswasMonitoring = User::where('role', 'siswa')
                 ->where('tempat_dudi', $selectedMonitoringDudi)
+                ->withCount([
+                    'attendances as hadir_count' => function ($q) {
+                        $q->where(function ($sub) {
+                            $sub->where('status', 'like', '%Hadir%')
+                                ->orWhere('status', 'like', '%Diluar%');
+                        });
+                    },
+                    'attendances as izin_count' => function ($q) {
+                        $q->where('status', 'like', '%Izin%');
+                    },
+                    'attendances as sakit_count' => function ($q) {
+                        $q->where('status', 'like', '%Sakit%');
+                    },
+                    'attendances as diluar_radius_count' => function ($q) {
+                        $q->where('status', 'like', '%Diluar%');
+                    },
+                ])
+                ->with(['logbooks' => function ($q) {
+                    $q->latest('created_at');
+                }])
                 ->get();
         }
 
@@ -96,10 +123,6 @@ class PembimbingController extends Controller
      *   B >= 75.00 (Baik / Lulus Standar)
      *   C >= 60.00 (Cukup / Perlu Pembinaan)
      *   D <  60.00 (Kurang)
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int|string  $studentId
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function updateNilaiLaporan(Request $request, int|string $studentId): RedirectResponse
     {
@@ -146,9 +169,6 @@ class PembimbingController extends Controller
 
     /**
      * Mengunduh seluruh riwayat logbook siswa dalam format dokumen Word/HTML terstruktur.
-     *
-     * @param  int|string  $studentId
-     * @return \Illuminate\Http\Response
      */
     public function exportLogbook(int|string $studentId): Response
     {
@@ -225,8 +245,6 @@ class PembimbingController extends Controller
 
     /**
      * Mengunduh rekapitulasi nilai keseluruhan siswa binaan format CSV dengan proteksi CSV Injection.
-     *
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
     public function exportExcel(): StreamedResponse
     {
@@ -270,9 +288,6 @@ class PembimbingController extends Controller
     /**
      * Netralisir potensi serangan CSV Formula Injection (DDE).
      * Jika diawali '=', '+', '-', '@', '\t', '\r', sistem menambahkan kutip tunggal di depannya.
-     *
-     * @param  mixed  $value
-     * @return string
      */
     private function sanitizeCsvField(mixed $value): string
     {
@@ -286,9 +301,6 @@ class PembimbingController extends Controller
 
     /**
      * Memperbarui informasi profil pribadi Guru Pembimbing Sekolah.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function updateProfile(Request $request): RedirectResponse
     {

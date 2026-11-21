@@ -165,6 +165,17 @@
                         $totalLogbook = class_exists('App\Models\Logbook')
                             ? App\Models\Logbook::where('user_id', $user->id)->count()
                             : 18; // Fallback jika model belum ada
+
+                        // Fallback logbook hari ini untuk kartu aktivitas terbaru jika belum di-passing dari controller
+                        if (!isset($latestLogbook) || !$latestLogbook) {
+                            $todayDate = \Carbon\Carbon::today()->toDateString();
+                            $latestLogbook = isset($logbooks)
+                                ? $logbooks->first(function ($item) use ($todayDate) {
+                                    return \Carbon\Carbon::parse($item->tanggal)->toDateString() === $todayDate
+                                        || \Carbon\Carbon::parse($item->created_at)->toDateString() === $todayDate;
+                                })
+                                : null;
+                        }
                     @endphp
 
                     <!-- Banner Pengumuman Resmi Sekolah -->
