@@ -4,93 +4,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Mentor - Sistem PKL</title>
+    <title>Dashboard Mentor - Jurnal PKL Digital</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Font: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        schoolnavy: '#3c5897',
+                        primary: '#1e3a8a',
+                        secondary: '#2563eb',
+                        third: '#3c5897',
+                        schoolnavy: '#1e3a8a',
                         schoolblue: '#2563eb',
                         schoolred: '#dc2626',
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif']
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
                     }
                 }
             }
         }
     </script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+    @livewireStyles
 </head>
 
-<body class="bg-slate-100 font-sans text-slate-800 antialiased overflow-x-hidden">
+<body class="bg-slate-100 font-sans text-slate-800 antialiased overflow-x-hidden"
+    x-data="{
+        activeTab: ['dashboard', 'mahasiswa', 'laporan', 'nilai'].includes(window.location.hash.replace('#', ''))
+            ? window.location.hash.replace('#', '')
+            : 'dashboard',
+        sidebarOpen: false,
+        pendingCount: {{ $perluValidasi ?? 0 }}
+    }"
+    @mentor-logbook-updated.window="pendingCount = $event.detail.pendingCount">
 
     <!-- MOBILE DRAWER OVERLAY -->
-    <div id="sidebar-overlay" onclick="toggleSidebar()"
-        class="fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 opacity-0 pointer-events-none md:hidden">
+    <div id="sidebar-overlay" x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
+        class="fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 md:hidden">
     </div>
 
     <div class="flex h-screen overflow-hidden">
 
         <!-- SIDEBAR -->
         <aside id="sidebar"
-            class="w-64 bg-schoolnavy text-white flex flex-col border-r border-blue-900/40 fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out shadow-2xl">
-            <!-- Brand / Logo Header -->
-            <div class="h-20 flex items-center justify-between px-6 border-b border-blue-900/50 bg-schoolnavy/50 backdrop-blur">
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
+            class="w-64 bg-primary text-white flex flex-col fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out md:static shadow-xl">
+            <!-- Pure Logo Brand Header -->
+            <div class="h-20 flex items-center justify-between px-6 bg-primary">
                 <div class="flex items-center gap-3">
-                    <div
-                        class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-schoolblue to-blue-400 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-600/40">
-                        <i class="fa-solid fa-graduation-cap text-lg"></i>
-                    </div>
+                    <img src="{{ asset('images/logo-onedek.png') }}" alt="Logo SMKN 1 Depok" class="w-9 h-9 object-contain shrink-0">
                     <div>
-                        <span class="text-xs font-black tracking-wider text-white block uppercase">Jurnal PKL</span>
-                        <span class="text-[10px] text-blue-300 font-medium">Digital System</span>
+                        <span class="text-sm font-bold tracking-wide text-white block">Jurnal PKL</span>
+                        <span class="text-xs text-blue-200 font-medium">Digital System</span>
                     </div>
                 </div>
-                <!-- Tombol Close Sidebar Khusus Mobile -->
-                <button type="button" onclick="toggleSidebar()" class="md:hidden text-blue-200 hover:text-white p-1">
+                <button type="button" @click="sidebarOpen = false" aria-label="Tutup Sidebar"
+                    class="md:hidden text-blue-200 hover:text-white min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
             <!-- Navigation Links -->
-            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                <a href="#dashboard" onclick="switchTab('dashboard')"
-                    class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors bg-schoolblue text-white shadow-md shadow-blue-600/20">
+            <nav class="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
+                <a href="#dashboard" @click.prevent="activeTab = 'dashboard'; sidebarOpen = false"
+                    :class="activeTab === 'dashboard' ? 'bg-secondary text-white shadow-sm' : 'text-blue-100 hover:bg-white/10 hover:text-white'"
+                    class="nav-link min-h-[44px] flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
                     <i class="fa-solid fa-house w-5 text-center"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="#mahasiswa" onclick="switchTab('mahasiswa')"
-                    class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors">
+                <a href="#mahasiswa" @click.prevent="activeTab = 'mahasiswa'; sidebarOpen = false"
+                    :class="activeTab === 'mahasiswa' ? 'bg-secondary text-white shadow-sm' : 'text-blue-100 hover:bg-white/10 hover:text-white'"
+                    class="nav-link min-h-[44px] flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
                     <i class="fa-solid fa-users w-5 text-center"></i>
                     <span>Daftar Siswa Bimbingan</span>
                 </a>
-                <a href="#laporan" onclick="switchTab('laporan')"
-                    class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors">
+                <a href="#laporan" @click.prevent="activeTab = 'laporan'; sidebarOpen = false"
+                    :class="activeTab === 'laporan' ? 'bg-secondary text-white shadow-sm' : 'text-blue-100 hover:bg-white/10 hover:text-white'"
+                    class="nav-link min-h-[44px] flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
                     <i class="fa-solid fa-book-open w-5 text-center"></i>
-                    <span>Validasi Jurnal & Laporan</span>
-                    <span
-                        class="ml-auto bg-schoolred text-white text-xs px-2 py-0.5 rounded-full font-bold">{{ $perluValidasi ?? 0 }}</span>
+                    <span>Validasi Jurnal</span>
+                    <span x-text="pendingCount" class="ml-auto text-xs font-bold text-amber-300 tabular-nums">{{ $perluValidasi ?? 0 }}</span>
                 </a>
-                <a href="#nilai" onclick="switchTab('nilai')"
-                    class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors">
+                <a href="#nilai" @click.prevent="activeTab = 'nilai'; sidebarOpen = false"
+                    :class="activeTab === 'nilai' ? 'bg-secondary text-white shadow-sm' : 'text-blue-100 hover:bg-white/10 hover:text-white'"
+                    class="nav-link min-h-[44px] flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
                     <i class="fa-solid fa-file-invoice w-5 text-center"></i>
                     <span>Penilaian PKL</span>
                 </a>
             </nav>
 
             <!-- Sidebar Footer / Logout -->
-            <div class="p-4 border-t border-blue-950">
+            <div class="p-4">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
                     <button type="submit"
-                        class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/15 transition text-xs font-semibold">
+                        class="w-full min-h-[44px] flex items-center gap-3 px-4 py-2.5 rounded-xl text-red-200 hover:bg-red-500/20 hover:text-white transition text-sm font-semibold">
                         <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>
                         <span>Keluar</span>
                     </button>
@@ -102,119 +120,96 @@
         <div class="flex-1 flex flex-col h-screen overflow-hidden">
 
             <!-- TOP NAVBAR -->
-            <header
-                class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-20 shadow-sm">
-                <div class="flex items-center space-x-4">
-                    <button onclick="toggleSidebar()"
-                        class="text-slate-500 hover:text-schoolnavy md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors">
-                        <i class="fa-solid fa-bars text-xl"></i>
+            <header class="min-h-[4.5rem] py-3 bg-white flex items-center justify-between px-4 sm:px-6 z-20 shadow-sm shrink-0 gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <button type="button" @click="sidebarOpen = !sidebarOpen" aria-label="Buka Menu"
+                        class="text-slate-600 hover:text-primary md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                        <i class="fa-solid fa-bars text-lg"></i>
                     </button>
-                    <div>
-                        <h2 id="page-title" class="text-xl font-bold text-schoolnavy">Dashboard Pembimbing</h2>
-                        <p class="text-xs text-slate-500">Selamat datang kembali, Bpk. Ahmad Fauzi, S.Kom.</p>
+                    <div class="min-w-0">
+                        <h2 id="page-title" class="text-base sm:text-xl font-bold text-primary truncate">Dashboard Pembimbing Industri</h2>
+                        <p class="text-xs text-slate-500 truncate hidden sm:block">Selamat datang kembali, {{ Auth::user()->name ?? 'Mentor DUDI' }}</p>
                     </div>
                 </div>
 
                 <!-- User Profile -->
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center gap-3 shrink-0">
                     <div class="text-right hidden sm:block">
-                        <span class="block text-sm font-semibold text-slate-800">Ahmad Fauzi, S.Kom.</span>
-                        <span class="block text-xs text-slate-500">Mentor / Pembimbing Industri</span>
+                        <span class="block text-sm font-semibold text-slate-800">{{ Auth::user()->name ?? 'Mentor DUDI' }}</span>
+                        <span class="block text-xs text-slate-500">Mentor Industri</span>
                     </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-schoolblue/10 text-schoolblue flex items-center justify-center font-bold border-2 border-schoolblue/20">
-                        AF
+                    <div class="w-10 h-10 rounded-full bg-third text-white flex items-center justify-center font-bold text-sm">
+                        {{ strtoupper(substr(Auth::user()->name ?? 'MD', 0, 2)) }}
                     </div>
                 </div>
             </header>
 
             <!-- SCROLLABLE PAGE CONTENT -->
-            <main class="flex-1 overflow-y-auto p-6 space-y-6">
+            <main class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
 
                 <!-- TAB 1: DASHBOARD -->
-                <div id="tab-dashboard" class="tab-content space-y-6">
-                    <div
-                        class="bg-gradient-to-r from-schoolnavy to-blue-900 rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between">
-                        <div class="relative z-10 space-y-2 mb-4 md:mb-0">
-                            <span
-                                class="bg-schoolblue/40 text-blue-200 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider border border-blue-400/30">Portal
-                                Pembimbing Industri</span>
-                            <h3 class="text-2xl md:text-3xl font-bold">Monitoring Aktivitas PKL Siswa</h3>
-                            <p class="text-slate-300 text-sm max-w-xl">Kelola absensi, validasi jurnal kegiatan harian,
-                                serta berikan penilaian akhir untuk siswa bimbingan Anda dengan mudah.</p>
+                <div id="tab-dashboard" x-show="activeTab === 'dashboard'" class="tab-content space-y-6">
+                    <div class="bg-gradient-to-r from-primary to-third rounded-xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div class="space-y-2">
+                            <h3 class="text-xl sm:text-2xl font-bold">Monitoring Aktivitas PKL Siswa</h3>
+                            <p class="text-blue-100 text-sm max-w-xl leading-relaxed">Kelola absensi, validasi jurnal kegiatan harian, serta berikan penilaian akhir untuk siswa bimbingan Anda dengan mudah.</p>
                         </div>
-                        <div
-                            class="relative z-10 w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/10 shadow-inner">
-                            <i class="fa-solid fa-user-shield text-4xl text-blue-200"></i>
-                        </div>
-                        <div
-                            class="absolute -right-10 -bottom-10 w-60 h-60 bg-schoolblue/20 rounded-full blur-3xl pointer-events-none">
+                        <div class="hidden md:flex w-16 h-16 bg-white/10 rounded-xl items-center justify-center shrink-0">
+                            <i class="fa-solid fa-user-shield text-2xl text-blue-100"></i>
                         </div>
                     </div>
 
-                    <!-- Statistics Cards (Dinamis) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div
-                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
-                            <div
-                                class="w-12 h-12 rounded-xl bg-blue-50 text-schoolblue flex items-center justify-center text-xl font-bold">
+                    <!-- Statistics Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                        <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-secondary flex items-center justify-center text-lg shrink-0">
                                 <i class="fa-solid fa-users"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Siswa</p>
-                                <h4 class="text-2xl font-bold text-slate-800">{{ $totalSiswa ?? 0 }} Siswa</h4>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Siswa</p>
+                                <h4 class="text-2xl font-bold text-slate-900 tabular-nums">{{ $totalSiswa ?? 0 }} Siswa</h4>
                             </div>
                         </div>
-                        <div
-                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
-                            <div
-                                class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+                        <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0">
                                 <i class="fa-solid fa-clock-rotate-left"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Perlu Validasi
-                                </p>
-                                <h4 class="text-2xl font-bold text-slate-800">{{ $perluValidasi ?? 0 }} Jurnal</h4>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Perlu Validasi</p>
+                                <h4 class="text-2xl font-bold text-slate-900 tabular-nums"><span x-text="pendingCount">{{ $perluValidasi ?? 0 }}</span> Jurnal</h4>
                             </div>
                         </div>
-                        <div
-                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
-                            <div
-                                class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                        <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">
                                 <i class="fa-solid fa-circle-check"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Hadir Hari Ini
-                                </p>
-                                <h4 class="text-2xl font-bold text-slate-800">{{ $hadirHariIni ?? 0 }} Siswa</h4>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Hadir Hari Ini</p>
+                                <h4 class="text-2xl font-bold text-slate-900 tabular-nums">{{ $hadirHariIni ?? 0 }} Siswa</h4>
                             </div>
                         </div>
-                        <div
-                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
-                            <div
-                                class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">
+                        <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-slate-100 text-third flex items-center justify-center text-lg shrink-0">
                                 <i class="fa-solid fa-award"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status Nilai
-                                </p>
-                                <h4 class="text-2xl font-bold text-slate-800">Draft</h4>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Status Nilai</p>
+                                <h4 class="text-2xl font-bold text-slate-900">Aktif</h4>
                             </div>
                         </div>
                     </div>
 
                     <!-- Recent Activity -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-bold text-schoolnavy text-lg">Aktivitas Jurnal Terbaru</h4>
-                            <button onclick="switchTab('laporan')"
-                                class="text-xs font-semibold text-schoolblue hover:underline">Lihat Semua</button>
+                    <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 space-y-4">
+                        <div class="flex items-center justify-between gap-2">
+                            <h4 class="font-bold text-primary text-base sm:text-lg">Aktivitas Jurnal Terbaru</h4>
+                            <button type="button" @click="activeTab = 'laporan'"
+                                class="min-h-[36px] text-xs sm:text-sm font-semibold text-secondary hover:underline cursor-pointer">Lihat Semua</button>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
+                            <table class="w-full text-left border-collapse text-xs sm:text-sm">
                                 <thead>
-                                    <tr
-                                        class="border-b border-slate-200 text-xs font-semibold text-slate-400 uppercase">
+                                    <tr class="bg-slate-50 text-xs font-semibold text-slate-500 uppercase">
                                         <th class="py-3 px-4">Nama Siswa</th>
                                         <th class="py-3 px-4">Tanggal</th>
                                         <th class="py-3 px-4">Kegiatan</th>
@@ -222,26 +217,37 @@
                                         <th class="py-3 px-4 text-center">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-100 text-sm">
+                                <tbody>
                                     @forelse($logbooks ?? [] as $logbook)
-                                        <tr class="hover:bg-slate-50">
-                                            <td class="py-3 px-4 font-semibold text-slate-800">
+                                        <tr class="hover:bg-slate-50 odd:bg-white even:bg-slate-50/40">
+                                            <td class="py-3.5 px-4 font-semibold text-slate-800 whitespace-nowrap">
                                                 {{ $logbook->user->name ?? 'Siswa' }}</td>
-                                            <td class="py-3 px-4 text-slate-500">{{ $logbook->tanggal }}</td>
-                                            <td class="py-3 px-4 text-slate-600">{{ $logbook->judul_kegiatan }}</td>
-                                            <td class="py-3 px-4">
-                                                <span
-                                                    class="bg-amber-100 text-amber-700 text-xs px-2.5 py-1 rounded-full font-medium">{{ $logbook->status ?? 'Pending' }}</span>
+                                            <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">{{ $logbook->tanggal }}</td>
+                                            <td class="py-3.5 px-4 text-slate-600">{{ $logbook->judul_kegiatan }}</td>
+                                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                                @php $st = $logbook->status ?? 'Pending'; @endphp
+                                                @if ($st === 'Approved')
+                                                    <span class="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Approved
+                                                    </span>
+                                                @elseif ($st === 'Revisi')
+                                                    <span class="inline-flex items-center gap-1.5 text-rose-700 font-semibold">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Revisi
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1.5 text-amber-700 font-semibold">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>{{ $st }}
+                                                    </span>
+                                                @endif
                                             </td>
-                                            <td class="py-3 px-4 text-center">
-                                                <button onclick="switchTab('laporan')"
-                                                    class="px-3 py-1 bg-schoolblue text-white text-xs rounded-lg hover:bg-blue-700 transition">Periksa</button>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <button type="button" @click="activeTab = 'laporan'"
+                                                    class="min-h-[36px] px-3.5 py-1.5 bg-secondary text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition cursor-pointer">Periksa</button>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center py-4 text-slate-400 text-xs">Belum
-                                                ada aktivitas jurnal terbaru.</td>
+                                            <td colspan="5" class="text-center py-6 text-slate-400 text-sm">Belum ada aktivitas jurnal terbaru.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -250,267 +256,79 @@
                     </div>
                 </div>
 
-                <!-- TAB 2: SISWA BIMBINGAN (Dinamis dari Plotting Admin) -->
-                <div id="tab-mahasiswa" class="tab-content space-y-6 hidden">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <!-- TAB 2: SISWA BIMBINGAN -->
+                <div id="tab-mahasiswa" x-show="activeTab === 'mahasiswa'" x-cloak x-data="{ searchSiswa: '' }" class="tab-content space-y-6">
+                    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm space-y-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
-                                <h3 class="font-bold text-schoolnavy text-lg">Daftar Siswa Bimbingan PKL</h3>
-                                <p class="text-xs text-slate-500">Daftar siswa yang ditempatkan di bawah bimbingan Anda
-                                    (sesuai plotting admin).</p>
+                                <h3 class="font-bold text-primary text-lg">Daftar Siswa Bimbingan PKL</h3>
+                                <p class="text-xs sm:text-sm text-slate-500">Daftar siswa yang ditempatkan di bawah bimbingan Anda (sesuai plotting admin).</p>
                             </div>
                             <div class="w-full sm:w-auto">
-                                <input type="text" placeholder="Cari nama siswa..."
-                                    class="w-full sm:w-64 px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-schoolblue">
+                                <input type="text" x-model="searchSiswa" placeholder="Cari nama siswa..."
+                                    class="w-full sm:w-64 min-h-[44px] px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-secondary">
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                             @forelse($siswas ?? [] as $siswa)
-                                <div
-                                    class="border border-slate-200 rounded-2xl p-5 hover:shadow-md transition bg-slate-50/50 flex flex-col justify-between">
+                                <div x-show="searchSiswa.trim() === '' || '{{ strtolower($siswa->name) }}'.includes(searchSiswa.toLowerCase())"
+                                    class="rounded-xl p-5 bg-slate-50 hover:bg-slate-100/80 transition flex flex-col justify-between space-y-4">
                                     <div>
-                                        <div class="flex items-center space-x-3 mb-3">
-                                            <div
-                                                class="w-12 h-12 rounded-full bg-schoolnavy text-white font-bold flex items-center justify-center">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-11 h-11 rounded-full bg-primary text-white font-bold text-sm flex items-center justify-center shrink-0">
                                                 {{ strtoupper(substr($siswa->name, 0, 2)) }}
                                             </div>
-                                            <div>
-                                                <h4 class="font-bold text-slate-800 text-base">{{ $siswa->name }}</h4>
-                                                <p class="text-xs text-slate-500">
-                                                    {{ $siswa->school ?? 'SMK Negeri 1 Depok' }}</p>
+                                            <div class="min-w-0">
+                                                <h4 class="font-bold text-slate-800 text-base truncate">{{ $siswa->name }}</h4>
+                                                <p class="text-xs text-slate-500">{{ $siswa->school ?? 'SMK Negeri 1 Depok' }}</p>
                                             </div>
                                         </div>
-                                        <div class="space-y-1 text-xs text-slate-600 mb-4">
-                                            <p><span class="font-semibold text-slate-700">Email:</span>
-                                                {{ $siswa->email }}</p>
-                                            <p><span class="font-semibold text-slate-700">Jurusan:</span>
-                                                {{ $siswa->jurusan ?? 'Rekayasa Perangkat Lunak' }}</p>
-                                            <p><span class="font-semibold text-slate-700">Periode:</span> Jul - Okt
-                                                2026</p>
+                                        <div class="space-y-1.5 text-xs sm:text-sm text-slate-600">
+                                            <p><span class="font-semibold text-slate-700">Email:</span> {{ $siswa->email }}</p>
+                                            <p><span class="font-semibold text-slate-700">Jurusan:</span> {{ $siswa->departemen ?? 'PPLG' }}</p>
+                                            <p><span class="font-semibold text-slate-700">Periode:</span> Jul - Okt 2026</p>
                                         </div>
                                     </div>
-                                    <button onclick="alert('Melihat detail siswa: {{ $siswa->name }}')"
-                                        class="w-full py-2 bg-white border border-slate-300 text-schoolnavy text-xs font-semibold rounded-xl hover:bg-slate-100 transition">Lihat
-                                        Detail Profil</button>
+                                    <button type="button" @click="activeTab = 'laporan'"
+                                        class="w-full min-h-[44px] py-2 bg-white text-primary text-xs sm:text-sm font-semibold rounded-lg shadow-sm hover:bg-primary hover:text-white transition cursor-pointer">Periksa Jurnal Siswa</button>
                                 </div>
                             @empty
-                                <p class="text-slate-500 text-sm col-span-3 text-center py-8">Belum ada siswa bimbingan
-                                    yang di-plotting oleh Admin.</p>
+                                <p class="text-slate-500 text-sm col-span-3 text-center py-8">Belum ada siswa bimbingan yang di-plotting oleh Admin.</p>
                             @endforelse
                         </div>
                     </div>
                 </div>
 
-                <!-- TAB 3: VALIDASI JURNAL & LAPORAN -->
-                <div id="tab-laporan" class="tab-content space-y-6 hidden">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-
-                        <!-- Header & Sub-Tab Switcher -->
-                        <div
-                            class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
-                            <div>
-                                <h3 class="font-bold text-schoolnavy text-lg">Validasi Jurnal & Rekap Laporan</h3>
-                                <p class="text-xs text-slate-500">Periksa jurnal harian berdasarkan tanggal atau unduh
-                                    rekap laporan lengkap per siswa.</p>
-                            </div>
-                            <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-                                <button onclick="switchSubLaporan('validasi')" id="btn-sub-val"
-                                    class="px-4 py-2 rounded-lg bg-white text-schoolnavy shadow-sm transition">Validasi
-                                    Harian</button>
-                                <button onclick="switchSubLaporan('rekap')" id="btn-sub-rek"
-                                    class="px-4 py-2 rounded-lg text-slate-500 hover:text-schoolnavy transition">Rekap
-                                    Per Orang & PDF</button>
-                            </div>
-                        </div>
-
-                        <!-- SUB-VIEW 1: VALIDASI HARIAN -->
-                        <div id="sub-val-content" class="space-y-4">
-                            <div
-                                class="flex flex-col sm:flex-row gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 items-center justify-between">
-                                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                                    <div class="flex items-center space-x-2">
-                                        <label class="text-xs font-semibold text-slate-600">Tanggal:</label>
-                                        <input type="date" value="2026-09-21"
-                                            class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:border-schoolblue">
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <label class="text-xs font-semibold text-slate-600">Siswa:</label>
-                                        <select id="filter-val-siswa" onchange="filterValSiswa(this.value)"
-                                            class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:border-schoolblue">
-                                            <option value="all">Semua Siswa</option>
-                                            @foreach ($siswas ?? [] as $s)
-                                                <option value="{{ $s->id }}">{{ $s->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <span
-                                    class="bg-amber-100 text-amber-800 font-semibold text-xs px-3 py-1 rounded-full">{{ count($logbooks ?? []) }}
-                                    Jurnal Ditampilkan</span>
-                            </div>
-
-                            @forelse($logbooks ?? [] as $logbook)
-                                <div data-student-id="{{ $logbook->user_id }}"
-                                    class="val-card border border-slate-200 rounded-2xl p-5 hover:border-schoolblue/50 transition bg-white space-y-4 shadow-sm">
-                                    <div
-                                        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
-                                        <div class="flex items-center space-x-3">
-                                            <div
-                                                class="w-9 h-9 rounded-full bg-schoolnavy text-white text-xs font-bold flex items-center justify-center">
-                                                {{ strtoupper(substr($logbook->user->name ?? 'S', 0, 2)) }}
-                                            </div>
-                                            <div>
-                                                <span
-                                                    class="font-bold text-slate-800 text-sm block">{{ $logbook->user->name ?? 'Siswa' }}</span>
-                                                <span
-                                                    class="text-xs text-slate-500">{{ $logbook->user->departemen ?? 'PPLG' }}</span>
-                                            </div>
-                                        </div>
-                                        <span
-                                            class="text-xs bg-schoolblue/10 text-schoolblue px-3 py-1 rounded-full font-semibold">{{ $logbook->tanggal }}</span>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <p class="text-xs font-semibold text-slate-400 uppercase">Kegiatan Utama:</p>
-                                        <p class="text-sm font-medium text-slate-700">{{ $logbook->judul_kegiatan }}
-                                        </p>
-                                        <div
-                                            class="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                            <span class="font-semibold text-slate-700">Deskripsi/Kendala:</span>
-                                            {{ $logbook->deskripsi }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Form Validasi Status -->
-                                    <form action="{{ route('mentor.logbook.update', $logbook->id) }}" method="POST"
-                                        class="space-y-3 pt-2 border-t border-slate-100">
-                                        @csrf
-                                        <div class="space-y-1.5">
-                                            <label class="block text-xs font-bold text-schoolnavy uppercase"><i
-                                                    class="fa-solid fa-pen-nib mr-1 text-schoolblue"></i> Catatan /
-                                                Umpan Balik Mentor</label>
-                                            <textarea name="catatan_mentor" rows="2" placeholder="Tulis catatan atau arahan untuk siswa di sini..."
-                                                class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-none focus:border-schoolblue">{{ $logbook->catatan_mentor }}</textarea>
-                                        </div>
-                                        <div class="flex items-center justify-end space-x-2 pt-1">
-                                            <button type="submit" name="status" value="Revisi"
-                                                class="px-4 py-2 bg-amber-500 text-white text-xs font-semibold rounded-xl hover:bg-amber-600 transition flex items-center space-x-1">
-                                                <i class="fa-solid fa-pen-to-square"></i><span>Minta Revisi</span>
-                                            </button>
-                                            <button type="submit" name="status" value="Approved"
-                                                class="px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-xl hover:bg-emerald-700 transition flex items-center space-x-1">
-                                                <i class="fa-solid fa-check"></i><span>Setujui Jurnal</span>
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            @empty
-                                <p class="text-slate-500 text-sm text-center py-8">Belum ada jurnal atau laporan dari
-                                    siswa bimbingan.</p>
-                            @endforelse
-                        </div>
-
-                        <!-- SUB-VIEW 2: REKAP LAPORAN PER ORANG & DOWNLOAD PDF -->
-                        <div id="sub-rek-content" class="space-y-4 hidden">
-                            <div
-                                class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
-                                <div class="flex items-center space-x-3 w-full sm:w-auto">
-                                    <label class="text-xs font-semibold text-slate-600">Pilih Siswa:</label>
-                                    <select id="filter-rekap-siswa" onchange="filterRekapSiswa(this.value)"
-                                        class="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none focus:border-schoolblue">
-                                        <option value="all">Semua Siswa</option>
-                                        @foreach ($siswas ?? [] as $s)
-                                            <option value="{{ $s->id }}">{{ $s->name }} ({{ $s->departemen ?? 'PPLG' }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                               
-                            </div>
-
-                            <div class="border border-slate-200 rounded-2xl p-5 bg-white space-y-4">
-                                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                                    <div>
-                                        <h4 class="font-bold text-slate-800 text-base">Rekapitulasi Jurnal Bimbingan
-                                        </h4>
-                                        <p class="text-xs text-slate-500">Periode Magang: Juli 2026 - Oktober 2026</p>
-                                    </div>
-                                    <span
-                                        class="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-full font-semibold">Status:
-                                        Aktif</span>
-                                </div>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-left border-collapse text-xs">
-                                        <thead>
-                                            <tr class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
-                                                <th class="py-2.5 px-3">Tanggal</th>
-                                                <th class="py-2.5 px-3">Aktivitas Utama</th>
-                                                <th class="py-2.5 px-3">Catatan Mentor</th>
-                                                <th class="py-2.5 px-3 text-center">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100">
-                                            @forelse($logbooks ?? [] as $logbook)
-                                                <tr class="rekap-row" data-student-id="{{ $logbook->user_id }}">
-                                                    <td class="py-3 px-3 text-slate-600">{{ $logbook->tanggal }}</td>
-                                                    <td class="py-3 px-3 text-slate-800 font-medium">
-                                                        <div>{{ $logbook->judul_kegiatan }}</div>
-                                                        <div class="text-[11px] text-slate-400">{{ $logbook->user->name ?? 'Siswa' }}</div>
-                                                    </td>
-                                                    <td class="py-3 px-3 text-slate-500">
-                                                        {{ $logbook->catatan_mentor ?? '-' }}</td>
-                                                    <td class="py-3 px-3 text-center">
-                                                        <span
-                                                            class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">{{ $logbook->status }}</span>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="4" class="text-center py-4 text-slate-400">Belum
-                                                        ada data rekap.</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
+                <!-- TAB 3: VALIDASI JURNAL & LAPORAN (LIVEWIRE) -->
+                <div id="tab-laporan" x-show="activeTab === 'laporan'" x-cloak class="tab-content space-y-6">
+                    <livewire:mentor-logbook-approval />
                 </div>
 
                 <!-- TAB 4: PENILAIAN -->
-                <div id="tab-nilai" class="tab-content space-y-6 hidden">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-
-                        <div class="border-b border-slate-200 pb-4">
-                            <h3 class="font-bold text-schoolnavy text-lg">Form & Manajemen Penilaian Akhir PKL</h3>
-                            <p class="text-xs text-slate-500">Berikan penilaian objektif berdasarkan berbagai aspek
-                                kompetensi dan kedisiplinan.</p>
+                <div id="tab-nilai" x-show="activeTab === 'nilai'" x-cloak class="tab-content space-y-6">
+                    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm space-y-6">
+                        <div>
+                            <h3 class="font-bold text-primary text-lg">Form &amp; Manajemen Penilaian Akhir PKL</h3>
+                            <p class="text-xs sm:text-sm text-slate-500">Berikan penilaian objektif berdasarkan berbagai aspek kompetensi dan kedisiplinan.</p>
                         </div>
 
-                        <!-- Grid Container Utama (Harus membungkus form dan bagian kanan secara berdampingan) -->
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                            <!-- BAGIAN KIRI: Form Input Nilai (Mengambil 2 kolom dari 3 kolom) -->
-                            <div class="lg:col-span-2 bg-slate-50/50 p-5 rounded-2xl border border-slate-200">
+                            <!-- BAGIAN KIRI: Form Input Nilai -->
+                            <div class="lg:col-span-2 bg-slate-50 p-4 sm:p-5 rounded-xl">
                                 <form action="{{ route('mentor.store.nilai') }}" method="POST" class="space-y-4">
                                     @csrf
-                                    <h4 class="font-bold text-schoolnavy text-sm uppercase tracking-wider">
-                                        <i class="fa-solid fa-pen-to-square mr-1 text-schoolblue"></i> Input Nilai
-                                        Siswa
+                                    <h4 class="font-bold text-primary text-sm uppercase tracking-wider">
+                                        <i class="fa-solid fa-pen-to-square mr-1 text-secondary"></i> Input Nilai Siswa
                                     </h4>
 
-                                    <!-- Pilih Siswa Bimbingan -->
-
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Pilih
-                                            Siswa (Individu)</label>
+                                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Pilih Siswa (Individu)</label>
                                         <select name="student_id"
-                                            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-schoolblue"
+                                            class="w-full min-h-[44px] px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-secondary"
                                             required>
                                             <option value="">-- Pilih Nama Siswa --</option>
                                             @forelse($siswas ?? [] as $s)
-                                                <option value="{{ $s->id }}">{{ $s->name }} (DUDI:
-                                                    {{ $s->tempat_dudi ?? 'Belum ada' }})</option>
+                                                <option value="{{ $s->id }}">{{ $s->name }} (DUDI: {{ $s->tempat_dudi ?? 'Belum ada' }})</option>
                                             @empty
                                                 <option value="">Tidak ada siswa bimbingan</option>
                                             @endforelse
@@ -519,170 +337,86 @@
 
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label
-                                                class="block text-xs font-semibold text-slate-700 uppercase mb-1">Kompetensi
-                                                Teknis (0-100)</label>
+                                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Kompetensi Teknis (0-100)</label>
                                             <input type="number" name="nilai_teknis" placeholder="88"
-                                                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white"
+                                                class="w-full min-h-[44px] px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-secondary"
                                                 required>
                                         </div>
                                         <div>
-                                            <label
-                                                class="block text-xs font-semibold text-slate-700 uppercase mb-1">Kedisiplinan
-                                                & Absensi (0-100)</label>
+                                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Kedisiplinan &amp; Absensi (0-100)</label>
                                             <input type="number" name="nilai_disiplin" placeholder="90"
-                                                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white"
+                                                class="w-full min-h-[44px] px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-secondary"
                                                 required>
                                         </div>
                                         <div>
-                                            <label
-                                                class="block text-xs font-semibold text-slate-700 uppercase mb-1">Kerjasama
-                                                Tim / Sikap (0-100)</label>
+                                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Kerjasama Tim / Sikap (0-100)</label>
                                             <input type="number" name="nilai_kerjasama" placeholder="85"
-                                                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white"
+                                                class="w-full min-h-[44px] px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-secondary"
                                                 required>
                                         </div>
                                         <div>
-                                            <label
-                                                class="block text-xs font-semibold text-slate-700 uppercase mb-1">Inisiatif
-                                                & Kreativitas (0-100)</label>
+                                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Inisiatif &amp; Kreativitas (0-100)</label>
                                             <input type="number" name="nilai_inisiatif" placeholder="87"
-                                                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white"
+                                                class="w-full min-h-[44px] px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-secondary"
                                                 required>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label
-                                            class="block text-xs font-semibold text-slate-700 uppercase mb-1">Catatan &
-                                            Ulasan Perkembangan PKL</label>
+                                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Catatan &amp; Ulasan Perkembangan PKL</label>
                                         <textarea name="catatan" rows="3" placeholder="Siswa memiliki kemampuan teknis yang baik..."
-                                            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white"></textarea>
+                                            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-secondary"></textarea>
                                     </div>
 
                                     <button type="submit"
-                                        class="w-full sm:w-auto px-6 py-2.5 bg-schoolblue text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition shadow-md">
-                                        Simpan & Kunci Nilai
+                                        class="w-full sm:w-auto min-h-[44px] px-6 py-2.5 bg-secondary text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition shadow-sm cursor-pointer">
+                                        Simpan &amp; Kunci Nilai
                                     </button>
                                 </form>
                             </div>
 
                             <!-- BAGIAN KANAN: Status Nilai Siswa Bimbingan -->
-                            <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                                <h4 class="font-bold text-schoolnavy text-sm uppercase tracking-wider">
-                                    <i class="fa-solid fa-clipboard-list mr-1 text-schoolblue"></i> Status Nilai Siswa
+                            <div class="space-y-4 bg-slate-50 p-4 sm:p-5 rounded-xl">
+                                <h4 class="font-bold text-primary text-sm uppercase tracking-wider">
+                                    <i class="fa-solid fa-clipboard-list mr-1 text-secondary"></i> Status Nilai Siswa
                                 </h4>
                                 <div class="space-y-3">
                                     @forelse($siswas ?? [] as $s)
                                         @php
-                                            // Cek apakah siswa ini sudah memiliki data nilai dari mentor di tabel grades
                                             $existingGrade = DB::table('grades')
                                                 ->where('student_id', $s->id)
                                                 ->whereNotNull('nilai_dudi')
                                                 ->first();
                                         @endphp
-                                        <div
-                                            class="bg-white p-3.5 rounded-xl border border-slate-200 flex items-center justify-between">
+                                        <div class="bg-white p-3.5 rounded-xl flex items-center justify-between gap-2 shadow-sm">
                                             <div>
-                                                <span
-                                                    class="font-semibold text-xs text-slate-800 block">{{ $s->name }}</span>
+                                                <span class="font-semibold text-sm text-slate-800 block">{{ $s->name }}</span>
                                                 @if ($existingGrade)
-                                                    <span class="text-[10px] text-emerald-600 font-bold"><i
-                                                            class="fa-solid fa-check-circle"></i> Sudah Dinilai (DUDI:
-                                                        {{ $existingGrade->nilai_dudi }})</span>
+                                                    <span class="text-xs text-emerald-700 font-semibold inline-flex items-center gap-1">
+                                                        <i class="fa-solid fa-check-circle"></i> Sudah Dinilai (DUDI: {{ $existingGrade->nilai_dudi }})
+                                                    </span>
                                                 @else
-                                                    <span class="text-[10px] text-amber-600 font-bold"><i
-                                                            class="fa-solid fa-clock"></i> Belum Dinilai</span>
+                                                    <span class="text-xs text-amber-700 font-semibold inline-flex items-center gap-1">
+                                                        <i class="fa-solid fa-clock"></i> Belum Dinilai
+                                                    </span>
                                                 @endif
                                             </div>
-                                            <span class="text-xs text-schoolblue font-semibold">Aktif</span>
+                                            <span class="text-xs text-secondary font-semibold">Aktif</span>
                                         </div>
                                     @empty
-                                        <p class="text-xs text-slate-400 text-center py-4">Belum ada siswa bimbingan.
-                                        </p>
+                                        <p class="text-xs sm:text-sm text-slate-400 text-center py-4">Belum ada siswa bimbingan.</p>
                                     @endforelse
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+            </main>
         </div>
     </div>
-    </div>
 
-    </main>
-    </div>
-    </div>
-
-    <!-- JavaScript untuk Navigasi Tab & Responsivitas Drawer -->
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (!sidebar || !overlay) return;
-
-            sidebar.classList.toggle('-translate-x-full');
-            if (overlay.classList.contains('opacity-0')) {
-                overlay.classList.remove('opacity-0', 'pointer-events-none');
-            } else {
-                overlay.classList.add('opacity-0', 'pointer-events-none');
-            }
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            const target = document.getElementById('tab-' + tabId);
-            if (target) target.classList.remove('hidden');
-
-            // Tutup sidebar otomatis di perangkat mobile / tablet saat menu dipilih
-            if (window.innerWidth < 768) {
-                const sidebar = document.getElementById('sidebar');
-                if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
-                    toggleSidebar();
-                }
-            }
-        }
-
-        function switchSubLaporan(subId) {
-            if (subId === 'validasi') {
-                document.getElementById('sub-val-content').classList.remove('hidden');
-                document.getElementById('sub-rek-content').classList.add('hidden');
-                document.getElementById('btn-sub-val').className =
-                    "px-4 py-2 rounded-lg bg-white text-schoolnavy shadow-sm transition";
-                document.getElementById('btn-sub-rek').className =
-                    "px-4 py-2 rounded-lg text-slate-500 hover:text-schoolnavy transition";
-            } else {
-                document.getElementById('sub-val-content').classList.add('hidden');
-                document.getElementById('sub-rek-content').classList.remove('hidden');
-                document.getElementById('btn-sub-rek').className =
-                    "px-4 py-2 rounded-lg bg-white text-schoolnavy shadow-sm transition";
-                document.getElementById('btn-sub-val').className =
-                    "px-4 py-2 rounded-lg text-slate-500 hover:text-schoolnavy transition";
-            }
-        }
-
-        function filterValSiswa(studentId) {
-            const cards = document.querySelectorAll('.val-card');
-            cards.forEach(card => {
-                if (studentId === 'all' || card.getAttribute('data-student-id') === studentId) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        function filterRekapSiswa(studentId) {
-            const rows = document.querySelectorAll('.rekap-row');
-            rows.forEach(row => {
-                if (studentId === 'all' || row.getAttribute('data-student-id') === studentId) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-    </script>
+    @livewireScripts
 </body>
 
 </html>
